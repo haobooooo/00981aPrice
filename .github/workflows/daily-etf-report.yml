@@ -1,0 +1,81 @@
+name: Daily ETF report
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 18:05 Asia/Taipei. GitHub schedules use UTC by default.
+    - cron: "5 10 * * *"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: daily-etf-report
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      report_date: ${{ steps.run_report.outputs.report_date }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run daily report
+        id: run_report
+        run: |
+          python daily_etf_portfolio.py --fund-code 49YTW --output-dir daily_reports
+          report_date="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("daily_reports/latest.json").read_text(encoding="utf-8"))
+          for asset in data["assets"]:
+              for detail in asset.get("Details") or []:
+                  tran_date = str(detail.get("TranDate", "")).split("T", 1)[0]
+                  if tran_date:
+                      print(tran_date)
+                      raise SystemExit
+          PY
+          )"
+          echo "report_date=$report_date" >> "$GITHUB_OUTPUT"
+
+      - name: Commit generated snapshots and reports
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add daily_reports
+          if git diff --cached --quiet; then
+            echo "No report changes to commit."
+          else
+            git commit -m "Update ETF report ${{ steps.run_report.outputs.report_date }}"
+            git push
+          fi
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: daily_reports
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
