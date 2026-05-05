@@ -164,24 +164,21 @@ def build_status_rows(
         }
 
     rows: list[dict[str, Any]] = []
-    has_previous = previous_portfolio is not None
     for row in stock_detail_rows(portfolio):
         code = str(row["DetailCode"])
         holding_lots = as_lots(row["Share"])
         previous_lots = as_lots(previous_by_code.get(code, {}).get("Share"))
+        previous_lots = previous_lots if previous_lots is not None else 0
 
-        diff_lots: int | None = None
-        remark = "無比較"
-        if has_previous:
-            diff_lots = (holding_lots or 0) - (previous_lots or 0)
-            if previous_lots is None and (holding_lots or 0) > 0:
-                remark = "新增"
-            elif diff_lots > 0:
-                remark = "加碼"
-            elif diff_lots < 0:
-                remark = "減碼"
-            else:
-                remark = "持平"
+        diff_lots = (holding_lots or 0) - previous_lots
+        if diff_lots > 0 and previous_lots == 0:
+            remark = "新增"
+        elif diff_lots > 0:
+            remark = "加碼"
+        elif diff_lots < 0:
+            remark = "減碼"
+        else:
+            remark = "持平"
 
         rows.append(
             {
