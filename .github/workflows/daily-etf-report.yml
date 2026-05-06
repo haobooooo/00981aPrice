@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   schedule:
     # 18:05 Asia/Taipei. GitHub schedules use UTC by default.
-    - cron: "5 10 * * *"
+    - cron: "30 9 * * *"
 
 permissions:
   contents: write
