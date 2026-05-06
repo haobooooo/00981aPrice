@@ -11,7 +11,7 @@
 - `daily_reports/latest.html`：最新 HTML
 - `daily_reports/index.html`：GitHub Pages 首頁，內容同最新 HTML
 
-持股現況會依「市值 Amount」由大到小排序，張數增減會用今日股數和上一份 JSON 股數比較。
+持股現況會依「市值 Amount」由大到小排序，張數增減會用今日股數和上一份 JSON 股數比較。若昨天有持股但今天清空，會顯示持有張數 `0`、負的張數增減，備註為 `清空`。
 
 ## GitHub Actions 設定
 

@@ -157,21 +157,27 @@ def report_title(portfolio: Portfolio) -> str:
 def build_status_rows(
     portfolio: Portfolio, previous_portfolio: Portfolio | None = None
 ) -> list[dict[str, Any]]:
+    current_rows = stock_detail_rows(portfolio)
+    current_by_code = {str(row["DetailCode"]): row for row in current_rows}
     previous_by_code: dict[str, dict[str, Any]] = {}
     if previous_portfolio is not None:
         previous_by_code = {
             str(row["DetailCode"]): row for row in stock_detail_rows(previous_portfolio)
         }
 
+    current_date = date_only(current_rows[0].get("TranDate")) if current_rows else ""
     rows: list[dict[str, Any]] = []
-    for row in stock_detail_rows(portfolio):
-        code = str(row["DetailCode"])
-        holding_lots = as_lots(row["Share"])
-        previous_lots = as_lots(previous_by_code.get(code, {}).get("Share"))
+    for code in set(current_by_code) | set(previous_by_code):
+        row = current_by_code.get(code)
+        previous_row = previous_by_code.get(code, {})
+        holding_lots = as_lots(row.get("Share")) if row else 0
+        previous_lots = as_lots(previous_row.get("Share"))
         previous_lots = previous_lots if previous_lots is not None else 0
 
         diff_lots = (holding_lots or 0) - previous_lots
-        if diff_lots > 0 and previous_lots == 0:
+        if (holding_lots or 0) == 0 and previous_lots > 0:
+            remark = "清空"
+        elif diff_lots > 0 and previous_lots == 0:
             remark = "新增"
         elif diff_lots > 0:
             remark = "加碼"
@@ -182,13 +188,13 @@ def build_status_rows(
 
         rows.append(
             {
-                "股票名稱": row["DetailName"],
+                "股票名稱": (row or previous_row).get("DetailName"),
                 "代碼": code,
                 "持有張數": holding_lots,
-                "_sort_amount": row["Amount"],
+                "_sort_amount": row.get("Amount") if row else 0,
                 "張數增減": diff_lots,
                 "備註": remark,
-                "日期": date_only(row["TranDate"]),
+                "日期": current_date or date_only((row or previous_row).get("TranDate")),
             }
         )
 
@@ -265,6 +271,7 @@ def write_status_html(path: Path, portfolio: Portfolio, rows: list[dict[str, Any
             "加碼": "buy",
             "新增": "new",
             "減碼": "sell",
+            "清空": "clear",
             "持平": "flat",
         }.get(remark, "unknown")
         row_class = "new-row" if remark == "新增" else ""
@@ -361,7 +368,7 @@ def write_status_html(path: Path, portfolio: Portfolio, rows: list[dict[str, Any
       color: #b4202a;
       font-weight: 800;
     }}
-    .remark.sell {{
+    .remark.sell, .remark.clear {{
       color: #149447;
       font-weight: 800;
     }}
