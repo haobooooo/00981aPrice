@@ -1,6 +1,6 @@
 # ETF Daily Portfolio Report
 
-每天用 GitHub Actions 抓取 ezmoney ETF 投資組合，和上一份 JSON 快照比較，輸出持股現況 HTML。
+每天用 GitHub Actions 抓取 ezmoney ETF 投資組合，和上一份 JSON 快照比較，輸出持股現況 HTML。目前包含 00981A（49YTW）與 00403A（63YTW），首頁會先顯示 00981A，再顯示 00403A。
 
 ## 會產生什麼
 
@@ -8,8 +8,10 @@
 - `daily_reports/html/49YTW_YYYY-MM-DD.html`：每日 HTML 報表
 - `daily_reports/csv/49YTW_YYYY-MM-DD.csv`：每日 CSV
 - `daily_reports/latest.json`：最新 JSON
-- `daily_reports/latest.html`：最新 HTML
-- `daily_reports/index.html`：GitHub Pages 首頁，內容同最新 HTML
+- `daily_reports/latest.html`：最新合併 HTML
+- `daily_reports/index.html`：GitHub Pages 首頁，內容同最新合併 HTML
+- `daily_reports/latest_49YTW.html`：00981A 最新 HTML
+- `daily_reports/latest_63YTW.html`：00403A 最新 HTML
 
 持股現況會依「市值 Amount」由大到小排序，張數增減會用今日股數和上一份 JSON 股數比較。若昨天有持股但今天清空，會顯示持有張數 `0`、負的張數增減，備註為 `清空`。
 
@@ -76,7 +78,7 @@ daily_reports/latest.html
 目前 workflow 固定：
 
 ```bash
-python daily_etf_portfolio.py --fund-code 49YTW --output-dir daily_reports
+python daily_etf_portfolio.py --fund-code 49YTW 63YTW --output-dir daily_reports
 ```
 
-如果要換 ETF，把 `49YTW` 改成別的 `fundCode` 即可。
+如果要調整 ETF，把 workflow 裡的 `49YTW 63YTW` 改成你要的 `fundCode` 清單即可。順序會決定首頁報表上下順序。

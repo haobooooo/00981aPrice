@@ -33,7 +33,7 @@ jobs:
       - name: Run daily report
         id: run_report
         run: |
-          python daily_etf_portfolio.py --fund-code 49YTW --output-dir daily_reports
+          python daily_etf_portfolio.py --fund-code 49YTW 63YTW --output-dir daily_reports
           report_date="$(python - <<'PY'
           import json
           from pathlib import Path
